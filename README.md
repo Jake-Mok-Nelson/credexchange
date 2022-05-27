@@ -10,3 +10,16 @@ I'm creating this project because I'm tired of using a variety of unreliable and
 By using a password provided at encyrpt time to locally encrypt the password we can ensure that the value that ends up in our the database is not reversable or decryptable by anyone other than the creator.
 
 Once the encrypted password has been downloaded it is deleted from the database.
+
+
+## Build & Release process
+
+### Flutter
+
+To test: flutter run -d chrome
+
+To build: flutter build web
+
+### Firestore
+
+firestore deploy
