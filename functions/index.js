@@ -2,6 +2,12 @@ const functions = require("firebase-functions");
 const admin = require('firebase-admin');
 const { initializeApp } = require("firebase-admin");
 const axios = require('axios');
+const escapeHtml = require('escape-html');
+
+// CORS Express middleware to enable CORS Requests.
+const cors = require('cors')({
+  origin: 'https://credexchange.web.app',
+});
 admin.initializeApp();
 
 // Since this code will be running in the Cloud Functions environment
@@ -9,58 +15,57 @@ admin.initializeApp();
 // detects authentication from the environment.
 const firestore = admin.firestore();
 
-// // // Create and Deploy Your First Cloud Functions
-// // // https://firebase.google.com/docs/functions/write-firebase-functions
-// //
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//   functions.logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
-
-// https://australia-southeast1-credexchange.cloudfunctions.net/storeCred
 exports.storeCredential = functions
     .region("australia-southeast1")
-    .https.onRequest(async (request, response) => {
-        functions.logger.log('Request received', request);
-        const encryptedCred = request.body.credential;
-        // Get bytes of encryptedCred
-        const encryptedCredBytes = Buffer.from(encryptedCred);
-        if (encryptedCredBytes.length === 0) { 
-            response.status(400).send('No credential provided');
-        } else if (encryptedCredBytes.length > 102400) {
-            response.status(400).send('Credential is too large');
-        }
+    .https.onRequest( (request, response) => {
+        // [START usingMiddleware]
+        // Enable CORS using the `cors` express middleware.
+        cors(request, response, async () => {
+          functions.logger.log('Request received', escapeHtml(request));
+          const encryptedCred = escapeHtml(request.body.credential);
+          // Get bytes of encryptedCred
+          const encryptedCredBytes = Buffer.from(encryptedCred);
+          if (encryptedCredBytes.length === 0) { 
+              response.status(400).send('No credential provided');
+          } else if (encryptedCredBytes.length > 102400) {
+              response.status(400).send('Credential is too large');
+          }
 
-            // Get encrypted credential from firestore
-            const writeResult = await admin.firestore().collection('credentials').add({credential:encryptedCred})
+              // Get encrypted credential from firestore
+          const writeResult = await admin.firestore().collection('credentials').add({credential:encryptedCred})
             .catch(error => {
                 functions.logger.error(error);
                 response.status(500).send("error storing credential");
             });
         
-            // Return the credential ID
-            response.json({result: `Credential with ID: ${writeResult.id} added.`, id: writeResult.id});
+          // Return the credential ID
+          response.json({result: `Credential with ID: ${writeResult.id} added.`, id: writeResult.id});
+        });
     });
 
 exports.retrieveCredential = functions
     .region("australia-southeast1")
-    .https.onRequest(async (request, response) => {
-        functions.logger.log('Request received', request);
-        const credentialId = request.body.id;
-        
-        // Retrive credential from firestore
-        const readResult = await admin.firestore().collection('credentials').doc(credentialId).get().catch(error => {
-            functions.logger.error(error);
-            response.status(500).send("error retrieving credential");
-        });
+    .https.onRequest((request, response) => {
+        // [START usingMiddleware]
+        // Enable CORS using the `cors` express middleware.
+        cors(request, response, async () => {
+          functions.logger.log('Request received', request);
+          const credentialId = escapeHtml(request.body.id);
+          
+          // Retrive credential from firestore
+          const readResult = await admin.firestore().collection('credentials').doc(credentialId).get().catch(error => {
+              functions.logger.error(error);
+              response.status(500).send("error retrieving credential");
+          });
 
-        admin.firestore().collection('credentials').doc(credentialId).delete().catch(error => {
-            functions.logger.error(error);
-            response.status(500).send();
+          admin.firestore().collection('credentials').doc(credentialId).delete().catch(error => {
+              functions.logger.error(error);
+              response.status(500).send();
+          });
+          
+          // If it exists then return it
+          response.status(200).json({credential: readResult.data().credential, id: credentialId});
         });
-        
-        // If it exists then return it
-        response.status(200).json({credential: readResult.data().credential, id: credentialId});
     });
 
 exports.NotifyOfNewCred = functions

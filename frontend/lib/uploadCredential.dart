@@ -1,4 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:encryptor/encryptor.dart';
+import 'package:frontend/returnDetails.dart';
+import 'package:random_password_generator/random_password_generator.dart';
+import 'package:http/http.dart' as http;
 
 class UploadCredentialForm extends StatefulWidget {
   const UploadCredentialForm({Key? key}) : super(key: key);
@@ -47,13 +52,101 @@ class _UploadCredentialFormState extends State<UploadCredentialForm> {
       },
     ));
 
-    void onPressedSubmit() {
+    Future<void> onPressedSubmit() async {
       if (_formKey.currentState!.validate()) {
         _formKey.currentState?.save();
 
-        print("Credential: $_credential");
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Form Submitted')));
+        // Generate a password
+        final password = RandomPasswordGenerator();
+        final newPassword = password.randomPassword(
+          letters: true,
+          numbers: true,
+          passwordLength: 20,
+          specialChar: true,
+          uppercase: true,
+        );
+
+        // Encrypt the credential using the generated password
+        var encrypted = Encryptor.encrypt(newPassword, _credential);
+
+        // Store credential for upload
+        final data = {"credential": encrypted};
+
+        // Upload credential via HTTP POST to the server
+        var uri = Uri.parse(
+            'https://australia-southeast1-credexchange.cloudfunctions.net/storeCredential');
+        final response = await http.post(
+          uri,
+          body: json.encode(data),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ).catchError((error) {
+          showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Error'),
+                  content: Text('Error uploading credential: $error'),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Close'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              });
+        });
+
+        // If response is 200 then navigate to ReceiverDetails
+        if (response.statusCode == 200) {
+          // Decode response body
+          final responseBody = json.decode(response.body);
+
+          // Get the ID from the decoded response body
+          final ID = responseBody['id'];
+
+          // If ID or newPassword is empty then show error message
+          if (ID.isEmpty || newPassword.isEmpty) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Error'),
+                  content: const Text(
+                      'Something went wrong, ID or Password is empty.'),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Close'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          } else {
+            // Navigate to ReceiverDetails
+            // ignore: use_build_context_synchronously
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RecieverDetails(
+                  ID: ID,
+                  Password: newPassword,
+                ),
+              ),
+            );
+          }
+        } else {
+          // Show error in a Snackbar
+          SnackBar(
+            content: Text('Error: ${response.statusCode}'),
+          );
+        }
       }
     }
 

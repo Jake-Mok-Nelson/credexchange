@@ -4,7 +4,12 @@ import 'package:frontend/retrieveCredential.dart';
 import 'package:frontend/uploadCredential.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // if (shouldUseFirestoreEmulator) {
+  //   FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  // }
   runApp(MyApp());
 }
 
@@ -39,7 +44,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  //List<String> _titles = ["Home", "Profile", "Shop"];
   final List<Widget> _items = [
     const Instructions(),
     const UploadCredentialForm(),
