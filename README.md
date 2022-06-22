@@ -49,6 +49,7 @@ Decryption occurs on the client side also.
 
 Note: Google auth and firebase auth may be required for the first deployment.
 
+Ensure you have a uniquely named Firebase project and have set the correct Firebase project ID in the `firebase.json` file.
 > firebase deploy
 
 ## Future Improvements
