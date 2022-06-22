@@ -15,3 +15,5 @@
 # vendor/
 
 .firebase
+
+.vscode
