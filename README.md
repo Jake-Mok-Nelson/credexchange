@@ -58,4 +58,6 @@ Note: Google auth and firebase auth may be required for the first deployment.
 - I currently get an alert in Slack when people upload and download credentials (I don't see the content); this should be moved a proper analytics system if this is used.
 - Change the verb of the "Upload" button to "Transfer" or "Store".
 - Add a maximum time that a credential can live.
-- Replace the two separate functions for uploading and downloading with a single function that handles different HTTP methods correctly.
+- Publish an API for the backend.
+  - Replace the two separate functions for uploading and downloading with a single function that handles different HTTP methods correctly.
+  - CLI to store and receive creds conveneiently.
