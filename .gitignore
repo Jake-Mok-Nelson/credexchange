@@ -17,3 +17,5 @@
 .firebase
 
 .vscode
+
+tmp/

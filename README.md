@@ -37,6 +37,13 @@ To download the credential you need to know **both** the ID of the credential an
 
 Decryption occurs on the client side also.
 
+
+### Cred Storage Flow
+![](./cred-create-flow.drawio.svg)
+
+### Cred Retrieval Flow
+![](./cred-retrieve-flow.drawio.svg)
+
 ## Build & Release
 
 ### Frontend
